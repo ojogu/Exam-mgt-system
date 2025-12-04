@@ -1,5 +1,24 @@
-class Department():
-    pass 
+from typing import Optional
+import uuid
+from src.v1.base.model import BaseModel
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
+from enum import StrEnum
+# from .user import Level
 
-class Course():
-    pass 
+
+class Department(BaseModel):
+    name:Mapped[str] = mapped_column(String, nullable=False) 
+    code:Mapped[str] = mapped_column(String, nullable=False) 
+
+
+class Course(BaseModel):
+    name:Mapped[str] = mapped_column(String, nullable=False)
+    department_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("departments.id"), nullable=False)
+    department:Mapped["Department"] = relationship("Department", backref="courses")
+    level_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("levels.id"), nullable=False)
+    level:Mapped["Level"] = relationship("Level", backref=backref("courses"))
+    

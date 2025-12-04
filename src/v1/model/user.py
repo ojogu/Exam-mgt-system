@@ -1,4 +1,5 @@
 from typing import Optional
+import uuid
 from src.v1.base.model import BaseModel
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -6,15 +7,19 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from enum import StrEnum
+# from .courses import Department
 
 
-class Role(StrEnum):
+class Role_Enum(StrEnum):
     STUDENT = "student"
     LECTURER = "lecturer"
     
-class Level(StrEnum):
-    STUDENT = "student"
-    LECTURER = "lecturer"
+class Level_Enum(StrEnum):
+    LEVEL_100 = "100"
+    LEVEL_200 = "200"
+    LEVEL_300 = "300"
+    LEVEL_400 = "400"
+    LEVEL_500 = "500"
 
 
 class User(BaseModel):
@@ -22,8 +27,18 @@ class User(BaseModel):
     first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True) 
     password: Mapped[Optional[str]] = mapped_column(String, nullable=True) 
-    role: Mapped[Role] = mapped_column(
-        SqlEnum(Role, name="role_enum"),  nullable=False)
+    role: Mapped[Role_Enum] = mapped_column(
+        SqlEnum(Role_Enum, name="role_enum"),  nullable=False)
+    
+    level_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("levels.id"), nullable=True)
+    level: Mapped[Optional["Level"]] = relationship("Level", uselist=False, backref=backref("user"))
+    
+    department_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("departments.id"), nullable=True)
+    department: Mapped[Optional["Department"]] = relationship("Department", uselist=False, backref=backref("user"))
+    
 
 class Level(BaseModel):
-    pass 
+    level: Mapped[Level_Enum] = mapped_column(
+        SqlEnum(Level_Enum, name="level_enum"),  nullable=False) 
+
+    
