@@ -23,10 +23,11 @@ class Level_Enum(StrEnum):
 
 
 class User(BaseModel):
-    email: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
-    first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True) 
-    password: Mapped[Optional[str]] = mapped_column(String, nullable=True) 
+    email: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True, index=True)
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False) 
+    password: Mapped[str] = mapped_column(String, nullable=False) 
+    school_id: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True) 
     role: Mapped[Role_Enum] = mapped_column(
         SqlEnum(Role_Enum, name="role_enum"),  nullable=False)
     
@@ -34,7 +35,7 @@ class User(BaseModel):
     level: Mapped[Optional["Level"]] = relationship("Level", uselist=False, backref=backref("user"))
     
     department_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("departments.id"), nullable=True)
-    department: Mapped[Optional["Department"]] = relationship("Department", uselist=False, backref=backref("user"))
+    department: Mapped[Optional["Department"]] = relationship("Department", uselist=False, backref=backref("user")) # type: ignore  # noqa: F821
     
 
 class Level(BaseModel):

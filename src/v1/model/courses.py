@@ -20,5 +20,5 @@ class Course(BaseModel):
     department_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("departments.id"), nullable=False)
     department:Mapped["Department"] = relationship("Department", backref="courses")
     level_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("levels.id"), nullable=False)
-    level:Mapped["Level"] = relationship("Level", backref=backref("courses"))
+    level:Mapped["Level"] = relationship("Level", backref=backref("courses")) # type: ignore  # noqa: F821
     
