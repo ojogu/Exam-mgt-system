@@ -25,25 +25,25 @@ async_session = async_sessionmaker(
 
 
 
-@asynccontextmanager
-#this helps in a way that, each internal async function in the bg task gets a new session, which prevent event loop or connection issue, coupled with the poolclass=NullPool param when creating the engine, it opens a new connection 
-async def get_async_db_session():
-    """
-    Get an async database session for use in background tasks.
+# @asynccontextmanager
+# #this helps in a way that, each internal async function in the bg task gets a new session, which prevent event loop or connection issue, coupled with the poolclass=NullPool param when creating the engine, it opens a new connection 
+# async def get_async_db_session():
+#     """
+#     Get an async database session for use in background tasks.
 
-    Yields:
-        AsyncSession: Database session
-    """
-    async with async_session() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception as e:
-            logger.error(f"Database session error: {e}")
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+#     Yields:
+#         AsyncSession: Database session
+#     """
+#     async with async_session() as session:
+#         try:
+#             yield session
+#             await session.commit()
+#         except Exception as e:
+#             logger.error(f"Database session error: {e}")
+#             await session.rollback()
+#             raise
+#         finally:
+#             await session.close()
 
 
 # # Create async session factory

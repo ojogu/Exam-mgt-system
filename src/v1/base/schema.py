@@ -1,27 +1,22 @@
-from typing import (  # Import Generic, List, TypeVar
+from typing import (
     Any,
-    Dict,
-    Generic,
-    List,
     Optional,
-    TypeVar,
 )
 from pydantic import BaseModel, ConfigDict
 
 
-class ErrorResponse(BaseModel):
-    status: str = "error"
+class BaseAPISchema(BaseModel):
     message: str
+    data: Optional[Any] = None
+
+class ErrorResponse(BaseAPISchema):
+    status: str = "error"
     error_code: Optional[str] = None
     resolution: Optional[str] = None
-    data: Optional[Any] = None
-    role: Optional[str] = None
 
-class SuccessResponse(BaseModel):
-    status:str = "success"
-    message:str
-    data: Optional[Any] = None
-    role: Optional[str] = None
+
+class SuccessResponse(BaseAPISchema):
+    status: str = "success"
 
 
 #constant messages

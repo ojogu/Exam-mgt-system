@@ -28,6 +28,7 @@ class User(BaseModel):
     last_name: Mapped[str] = mapped_column(String, nullable=False) 
     password: Mapped[str] = mapped_column(String, nullable=False) 
     school_id: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True) 
+    # is_verified: Mapped[bool] = mapped_column(Boolean, default=False) #email verification, set to true
     role: Mapped[Role_Enum] = mapped_column(
         SqlEnum(Role_Enum, name="role_enum"),  nullable=False)
     

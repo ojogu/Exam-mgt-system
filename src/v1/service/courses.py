@@ -1,0 +1,2 @@
+#link courses to dept and level, have an endpoint where student/lecturers register courses based on level. 
+#seed courses for 100l, lecturers register courses to teach, student register courses only based on their level and department 
