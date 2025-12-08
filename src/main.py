@@ -3,12 +3,12 @@ from contextlib import asynccontextmanager
 # from utils.db import init_db
 from src.util.db import init_db, drop_db
 from src.util.redis_client import setup_redis
-# from src.v1.auth.auth import user_auth_router
+from src.v1.controllers.user import user_route
 from fastapi.middleware.cors import CORSMiddleware
 from src.util.config import Settings 
 from src.util.exception import register_error_handlers
 # from src.v1.dspace.dspace_auth.route import dspace_auth_router
-# from src.v1.admin.route import admin_router, super_admin_router
+from src.v1.auth.routes import auth_route
 @asynccontextmanager
 async def life_span(app: FastAPI):
     """
@@ -25,9 +25,9 @@ async def life_span(app: FastAPI):
         None: This function yields control back to the application after startup.
     """
     
-    print(f"dropping db....")
-    await drop_db()
-    print(f"db dropped")
+    # print(f"dropping db....")
+    # await drop_db()
+    # print(f"db dropped")
     
     # Startup: Initialize the database
     print("server is starting....")
@@ -61,8 +61,8 @@ app.add_middleware(
 register_error_handlers(app)
 
 #register routers/blueprint
-# app.include_router(user_auth_router, prefix=Settings.API_PREFIX)
-# app.include_router(dspace_auth_router, prefix=Settings.API_PREFIX)
+app.include_router(auth_route, prefix=Settings.API_PREFIX)
+app.include_router(user_route, prefix=Settings.API_PREFIX)
 # app.include_router(super_admin_router, prefix=Settings.API_PREFIX)
 # app.include_router(admin_router, prefix=Settings.API_PREFIX)
 

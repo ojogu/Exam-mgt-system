@@ -12,11 +12,12 @@ from enum import StrEnum
 
 class Department(BaseModel):
     name:Mapped[str] = mapped_column(String, nullable=False) 
-    code:Mapped[str] = mapped_column(String, nullable=False) 
+     
 
 
 class Course(BaseModel):
     name:Mapped[str] = mapped_column(String, nullable=False)
+    code:Mapped[str] = mapped_column(String, nullable=False)
     department_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("departments.id"), nullable=False)
     department:Mapped["Department"] = relationship("Department", backref="courses")
     level_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("levels.id"), nullable=False)

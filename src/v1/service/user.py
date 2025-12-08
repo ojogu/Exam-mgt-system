@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.v1.model import User
+from src.v1.model import  Level_Enum, Role_Enum
+from src.v1.model import User, Level, Department, Course
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from src.v1.schema.user import CreateUser
 from src.v1.base.exception import (
     NotFoundError, 
@@ -17,21 +19,52 @@ class UserService():
         
     async def create_user(self, user_data:CreateUser): 
         try:
-            validated_data = CreateUser(user_data)
-            logger.info(f"Attempting to create user with email: {validated_data.email} and school_id: {validated_data.school_id}")
-            user = await self.check_if_user_exist_by_email(validated_data.email) or await self.check_if_user_exist_by_school_id(validated_data.school_id)
+            # user_data = CreateUser(user_data)
+            logger.info(f"Attempting to create user with email: {user_data.email} and school_id: {user_data.school_id}")
+            user = await self.check_if_user_exist_by_email(user_data.email) or await self.check_if_user_exist_by_school_id(user_data.school_id)
             
             if user:
                 logger.warning(f"User with ID {user.id} already exists.")
                 raise AlreadyExistsError(f"User with ID {user.id} already exist")
             
-            password = password_hash(validated_data.password)
+            password = password_hash(user_data.password)
+            user_data.password = password
             
-            #seed department, link users to dept both lecturer and student(link level too)
-            new_user = User(
-                **validated_data.model_dump()
+            #seed department, fetch the department, link users to dept both lecturer and student(link level too)
+            #
+            stmt = await self.db.execute(
+                select(Department).where(
+                    Department.name.ilike(user_data.department)
+                )
             )
-            validated_data.password = password
+            dept = stmt.scalar_one_or_none()
+            if not dept: 
+                raise NotFoundError(f"{user_data.department} not found")
+            
+            #link student to level
+            level = None
+            if user_data.role == Role_Enum.STUDENT:
+                #seed the level in the db, query the level table based on student level, link to users
+                stmt = await self.db.execute (select(Level).where(
+                    Level.name.ilike(user_data.level)
+                ))
+                level = stmt.scalar_one_or_none()
+                if not level: 
+                    raise NotFoundError(f"{user_data.level} not found")
+                
+                
+         
+            new_user = User(
+                email=user_data.email,
+                first_name = user_data.first_name,
+                last_name = user_data.last_name,
+                password = user_data.password,
+                school_id = user_data.school_id,
+                role = user_data.role,
+                level=level,
+                department=dept
+            )
+            
             self.db.add(new_user)
             await self.db.commit()
             logger.info(f"User {new_user.id} created successfully.")
@@ -39,8 +72,8 @@ class UserService():
         except AlreadyExistsError as e:
             logger.warning(f"Failed to create user: {e}")
             raise e
-        except Exception as e:
-            logger.error(f"Error creating user: {e}")
+        # except Exception as e:
+        #     logger.error(f"Error creating user: {e}")
             await self.db.rollback()
             raise ServerError(f"Failed to create user: {e}")
         
@@ -53,7 +86,7 @@ class UserService():
         try:
             logger.debug(f"Checking if user exists with email: {email}")
             stmt = await self.db.execute(
-                select(User).where(
+                select(User).options(selectinload(User.department)).where(
                     email==User.email
                 )
             )

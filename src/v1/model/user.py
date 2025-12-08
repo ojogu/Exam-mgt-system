@@ -40,7 +40,7 @@ class User(BaseModel):
     
 
 class Level(BaseModel):
-    level: Mapped[Level_Enum] = mapped_column(
+    name: Mapped[Level_Enum] = mapped_column(
         SqlEnum(Level_Enum, name="level_enum"),  nullable=False) 
 
     

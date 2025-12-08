@@ -18,6 +18,7 @@ user_service:UserService = Depends(get_user_service)
     validated_data = UserResponse.model_validate(new_user).model_dump()
     return validated_data
 
+
 @auth_route.post("/student-register")
 async def student_register(user_data: CreateUser,
 user_service:UserService = Depends(get_user_service)                    
