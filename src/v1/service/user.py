@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model import  Level_Enum, Role_Enum
 from src.v1.model import User, Level, Department, Course
-from sqlalchemy import select
+from sqlalchemy import select, cast, String
 from sqlalchemy.orm import selectinload
-from src.v1.schema.user import CreateUser
+from src.v1.schema.user import CreateUser, CreateStudent
 from src.v1.base.exception import (
     NotFoundError, 
     AlreadyExistsError,
@@ -17,7 +17,7 @@ class UserService():
     def __init__(self, db: AsyncSession):
         self.db = db
         
-    async def create_user(self, user_data:CreateUser): 
+    async def create_user(self, user_data:CreateUser|CreateStudent): 
         try:
             # user_data = CreateUser(user_data)
             logger.info(f"Attempting to create user with email: {user_data.email} and school_id: {user_data.school_id}")
@@ -43,10 +43,10 @@ class UserService():
             
             #link student to level
             level = None
-            if user_data.role == Role_Enum.STUDENT:
+            if user_data.role == Role_Enum.STUDENT and user_data.level is not None:
                 #seed the level in the db, query the level table based on student level, link to users
                 stmt = await self.db.execute (select(Level).where(
-                    Level.name.ilike(user_data.level)
+                    Level.name == user_data.level
                 ))
                 level = stmt.scalar_one_or_none()
                 if not level: 

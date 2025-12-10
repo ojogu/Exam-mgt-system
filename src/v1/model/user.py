@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
-from enum import StrEnum
+from enum import StrEnum, IntEnum
 # from .courses import Department
 
 
@@ -14,12 +14,12 @@ class Role_Enum(StrEnum):
     STUDENT = "student"
     LECTURER = "lecturer"
     
-class Level_Enum(StrEnum):
-    LEVEL_100 = "100"
-    LEVEL_200 = "200"
-    LEVEL_300 = "300"
-    LEVEL_400 = "400"
-    LEVEL_500 = "500"
+class Level_Enum(IntEnum):
+    LEVEL_100 = 100
+    LEVEL_200 = 200
+    LEVEL_300 = 300
+    LEVEL_400 = 400
+    LEVEL_500 = 500
 
 
 class User(BaseModel):
@@ -37,7 +37,17 @@ class User(BaseModel):
     
     department_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("departments.id"), nullable=True)
     department: Mapped[Optional["Department"]] = relationship("Department", uselist=False, backref=backref("user")) # type: ignore  # noqa: F821
+    @property
+    def level(self):
+        # Access the 'name' attribute from the related Level object
+        if self.level_rel:
+            return self.level_rel.name
+        return None
     
+    @level.setter
+    def level(self, value):
+        # You can ignore the assignment if this property is purely computed:
+        pass
 
 class Level(BaseModel):
     name: Mapped[Level_Enum] = mapped_column(

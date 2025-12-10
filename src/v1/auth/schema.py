@@ -1,11 +1,12 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, field_validator, ValidationError
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, ValidationError
 
 class Login(BaseModel):
     email: Optional[EmailStr] = None
     school_id: Optional[str] = None
     password: str
-
+    
+    model_config = ConfigDict(from_attributes=True)
     @field_validator('email', 'school_id', mode='before')
     @classmethod
     def check_at_least_one_provided(cls, v, info):

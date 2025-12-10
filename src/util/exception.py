@@ -69,7 +69,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Environment variable missing",
                 "error_code": "environment_variable_missing",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -83,7 +83,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Resource already in use",
                 "error_code": "resource_in_use",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -98,7 +98,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "access or refresh token invalid",
                 "error_code": "Invalid_token",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -113,7 +113,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "forbidden - user lacks required permissions",
                 "error_code": "Forbidden_error",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -126,7 +126,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "access or refresh token invalid",
                 "error_code": "Invalid_token",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -141,7 +141,7 @@ def register_error_handlers(app: FastAPI):
                 "error_code": "token_expired",
                 "resolution": "Please get a new token",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -155,7 +155,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Resource not found",
                 "error_code": "not_found",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -169,7 +169,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Resource already exists",
                 "error_code": "already_exists",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -183,7 +183,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Invalid email or password",
                 "error_code": "invalid_credentials",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -197,7 +197,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Bad request",
                 "error_code": "bad_request",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -212,7 +212,7 @@ def register_error_handlers(app: FastAPI):
                 "error_code": "not_verified",
                 "resolution": "Please verify your account",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -226,7 +226,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Email verification failed",
                 "error_code": "email_verification_failed",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -240,7 +240,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Database error occurred",
                 "error_code": "database_error",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -254,7 +254,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Internal server error",
                 "error_code": "server_error",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -269,7 +269,7 @@ def register_error_handlers(app: FastAPI):
                 "error_code": "account_not_active",
                 "resolution": "Please activate your account",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -284,7 +284,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "HTTP error occurred",
                 "error_code": "http_error",
                 "data": None,
-                "role": None
+                
             }
         )
     )
@@ -302,13 +302,14 @@ def register_error_handlers(app: FastAPI):
                 "message": exc.detail,
                 "error_code": "http_error",
                 "data": None,
-                "role": None
+                
             },
             status_code=exc.status_code
         )
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        exception_logger.error(f"Validation error: {str(exc)}")
         error_details = []
         for error in exc.errors():
             field = " -> ".join(str(loc) for loc in error["loc"])
@@ -323,7 +324,7 @@ def register_error_handlers(app: FastAPI):
                 "status": "error",
                 "message": error_message,
                 "error_code": "validation_error",
-                "data": exc.errors(),
+                # "data": exc.errors(),
             },
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
@@ -331,12 +332,29 @@ def register_error_handlers(app: FastAPI):
     @app.exception_handler(ValidationError)
     async def pydantic_validation_error_handler(request: Request, exc: ValidationError):
         exception_logger.error(f"Pydantic validation error: {str(exc)}")
+        
+        # 1. Get the list of individual error dictionaries
+        pydantic_errors = exc.errors()
+
+        # 2. Extract the 'msg' (message) and optionally the 'loc' (location/field name) 
+        #    from each error dictionary.
+        formatted_messages = []
+        for error in pydantic_errors:
+            # 'loc' is a tuple/list indicating where the error occurred (e.g., ('body', 'level'))
+            field_name = error['loc'][-1] if error['loc'] else 'Input'
+            message = error['msg']
+            
+            # Format: "Field Name: Error Message"
+            formatted_messages.append(f"Field '{field_name}': {message}")
+
+        # 3. Join all formatted messages into a single string
+        client_message = " | ".join(formatted_messages)
         return JSONResponse(
             content={
                 "status": "error",
-                "message": "Validation error",
-                "error_code": "pydantic_validation_error",
-                "data": exc.json(),
+                "message": client_message,
+                "error_code": "validation_error",
+            
             },
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
         )
@@ -350,7 +368,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Integrity error: An object with this value already exists",
                 "error_code": "integrity_error",
                 "data": None,
-                "role": None
+
             },
             status_code=status.HTTP_409_CONFLICT
         )
@@ -364,7 +382,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "Database error",
                 "error_code": "database_error",
                 "data": None,
-                "role": None
+                
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
@@ -378,7 +396,7 @@ def register_error_handlers(app: FastAPI):
     #             "message": "Oops! Something went wrong",
     #             "error_code": "server_error",
     #             "data": None,
-    #             "role": None
+    #             
     #         },
     #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     #     )
@@ -393,7 +411,7 @@ def register_error_handlers(app: FastAPI):
                 "message": "An unexpected error occurred",
                 "error_code": "unexpected_error",
                 "data": None,
-                "role": None
+                
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
