@@ -1,14 +1,13 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-# from utils.db import init_db
 from src.util.db import init_db, drop_db
 from src.util.redis_client import setup_redis
-from src.v1.controllers.user import user_route
 from fastapi.middleware.cors import CORSMiddleware
 from src.util.config import Settings 
 from src.util.exception import register_error_handlers
-from src.v1.controllers.courses import courses_route
-from src.v1.auth.routes import auth_route
+from src.v1.controllers.user import user_router
+from src.v1.controllers.courses import courses_router
+from src.v1.auth.routes import auth_router
 @asynccontextmanager
 async def life_span(app: FastAPI):
     """
@@ -61,9 +60,9 @@ app.add_middleware(
 register_error_handlers(app)
 
 #register routers/blueprint
-app.include_router(auth_route, prefix=Settings.API_PREFIX)
-app.include_router(user_route, prefix=Settings.API_PREFIX)
-app.include_router(courses_route, prefix=Settings.API_PREFIX)
+app.include_router(auth_router, prefix=Settings.API_PREFIX)
+app.include_router(user_router, prefix=Settings.API_PREFIX)
+app.include_router(courses_router, prefix=Settings.API_PREFIX)
 # app.include_router(admin_router, prefix=Settings.API_PREFIX)
 
 

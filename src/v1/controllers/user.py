@@ -10,9 +10,9 @@ from src.util.response import success_response
 def get_user_service(db: AsyncSession = Depends(get_session)):
     return UserService(db=db)
 
-user_route = APIRouter()
+user_router = APIRouter()
 
-@user_route.get("/lecturer/{email}")
+@user_router.get("/lecturer/{email}")
 async def fetch_lecturer(
     email:EmailStr,
     user_service:UserService = Depends(get_user_service)                      

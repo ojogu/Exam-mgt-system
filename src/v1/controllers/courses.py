@@ -12,8 +12,8 @@ logger = setup_logger(__name__, "courses_route.log")
 def get_course_service(db: AsyncSession = Depends(get_session)):
     return CoursesService(db=db)
 
-courses_route = APIRouter()
-@courses_route.get("/levels")
+courses_router = APIRouter()
+@courses_router.get("/levels")
 async def fetch_levels(course_service: CoursesService = Depends(get_course_service)):
     levels = await course_service.fetch_all_level()
     logger.info(levels)

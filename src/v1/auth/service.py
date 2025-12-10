@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 import uuid
 from passlib.context import CryptContext
-from datetime import timedelta, datetime
 from fastapi import Request
 import jwt
 from src.util.config import config
 from src.v1.base.exception import TokenExpired
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.v1.base.exception import InvalidToken
 from src.util.log import setup_logger
+from .schema import Token
 logger = setup_logger(__name__, "auth_service.log")
 
 ctx = CryptContext(
@@ -20,7 +20,7 @@ def password_hash(password:str)->str:
     return hash 
 
 
-def verify_hash(password, password_hash):
+def verify_password(password, password_hash):
     is_valid = ctx.verify(password, password_hash)
     return is_valid 
 
@@ -33,12 +33,18 @@ class AuthService():
     
     def create_access_token(self, user_data:dict, expiry:timedelta=None, refresh:bool = False):
         try:
-            payload = {}
-            payload["user"] = user_data
+            # payload["user"] = user_data
+            # payload["exp"] = datetime.now() + to_expire
+            # payload["jti"] = str(uuid.uuid4())
+            # payload["refresh"] = refresh
+            
             to_expire = expiry if expiry is not None else timedelta(seconds=config.access_token_expiry)
-            payload["exp"] = datetime.now() + to_expire
-            payload["jti"] = str(uuid.uuid4())
-            payload["refresh"] = refresh
+            payload = Token(
+                user=user_data,
+                exp = datetime.now() + to_expire,
+                jti= str(uuid.uuid4()),
+                refresh=refresh 
+            ).model_dump()
             
             token = jwt.encode(
                 payload=payload,
@@ -117,28 +123,24 @@ class TokenService(HTTPBearer):
         token = credentials.credentials
 
         # Step 2: Validate token
-        if not self.token_valid(token):
-            raise InvalidToken("Invalid or expired token")
+        # if not self.token_valid(token):
+        #     raise InvalidToken("Invalid or expired token")
 
         # Step 3: Decode token
-        token_data = auth_service.decode_token(token)
-
-        self.verify_token_data(token_data)
-        
-        if token_data is None:
-            raise InvalidToken("No data found in access token")
-
-        # if token_data.get("refresh", False):
-        #     raise InvalidToken("Please provide a valid access token, not a refresh token")
-
-        return token_data
-
-    def token_valid(self, token: str) -> bool:
         try:
             token_data = auth_service.decode_token(token)
-            return token_data is not None
         except Exception:
-            return False
+            raise InvalidToken("Invalid or expired token")
+
+        if not token_data:
+            raise InvalidToken("No data found in token")
+
+        # Allow child to validate token type (access or refresh)
+        self.verify_token_data(token_data)
+        
+        return token_data
+
+
         
     def verify_token_data(self, token_data:dict):
         raise NotImplementedError("Overide in the child classes ")

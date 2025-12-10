@@ -7,10 +7,12 @@ from src.v1.schema.user import CreateUser, CreateStudent
 from src.v1.base.exception import (
     NotFoundError, 
     AlreadyExistsError,
-    ServerError
+    ServerError,
+    InvalidEmailPassword
 )
-from src.v1.auth.service import verify_hash, password_hash
+from src.v1.auth.service import verify_password, password_hash
 from src.util.log import setup_logger
+from src.v1.auth.schema import Login
 logger = setup_logger(__name__, "user_service.log")
 
 class UserService():
@@ -70,16 +72,49 @@ class UserService():
             logger.info(f"User {new_user.id} created successfully.")
             return new_user
         except AlreadyExistsError as e:
-            logger.warning(f"Failed to create user: {e}")
+            logger.error(f"Failed to create user: {e}")
             raise e
         # except Exception as e:
         #     logger.error(f"Error creating user: {e}")
             await self.db.rollback()
             raise ServerError(f"Failed to create user: {e}")
         
-        #do further authentication 
+         
         
+    async def authenticate_user(self, user_data:Login):
+        logger.info(
+            f"checking user with email={user_data.email} or school_id={user_data.school_id}"
+        )
+
+        user = None
+
+        # Try email first if provided
+        if user_data.email:
+            user = await self.check_if_user_exist_by_email(user_data.email)
+
+        # If not found yet, try school_id
+        if not user and user_data.school_id:
+            user = await self.check_if_user_exist_by_school_id(user_data.school_id)
+
+        # Handle not found
+        if not user:
+            identifier = user_data.email or user_data.school_id
+            logger.error(f"User with identifier '{identifier}' does not exist.")
+            raise NotFoundError(f"User with identifier '{identifier}' does not exist.")
+
         
+        #verify password
+        if not verify_password(user_data.password, user.password):
+            raise InvalidEmailPassword()
+        
+        #do further authentication
+        
+        #prepare jwt payload
+        jwt_payload = {
+            "user_id": str(user.id),
+            "role": user.role.value
+        }
+        return jwt_payload
         
     
     async def check_if_user_exist_by_email(self, email:str):
