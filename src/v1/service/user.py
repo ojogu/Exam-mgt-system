@@ -142,7 +142,7 @@ class UserService():
             logger.debug(f"Checking if user exists with email: {email}")
             stmt = await self.db.execute(
                 select(User).options(selectinload(User.department)).where(
-                    email==User.email
+                    User.email.ilike(email)
                 )
             )
             user = stmt.scalar_one_or_none()
@@ -160,9 +160,9 @@ class UserService():
             logger.debug(f"Checking if user exists with school ID: {school_id}")
             stmt = await self.db.execute(
                 select(User).where(
-                    school_id == User.school_id
+                    User.school_id.ilike(school_id)
                 )
-            ) 
+            )
             user = stmt.scalar_one_or_none()
             if user:
                 logger.debug(f"User with school ID {school_id} found.")
