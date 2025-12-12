@@ -1,12 +1,11 @@
-from typing import Optional
 import uuid
 from src.v1.base.model import BaseModel
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+# from datetime import datetime, timezone
+# from typing import Any, Dict, List, Optional
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
-from enum import StrEnum
+
 # from .user import Level
 
 
