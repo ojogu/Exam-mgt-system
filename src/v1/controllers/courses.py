@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from src.v1.schema.courses import LevelResponse
-from src.v1.service.courses import CoursesService
+from src.v1.service.courses import CourseService
 from src.util.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model.user import Role_Enum
@@ -10,11 +10,11 @@ from src.util.log import setup_logger
 logger = setup_logger(__name__, "courses_route.log")
 
 def get_course_service(db: AsyncSession = Depends(get_session)):
-    return CoursesService(db=db)
+    return CourseService(db=db)
 
 courses_router = APIRouter()
 @courses_router.get("/levels")
-async def fetch_levels(course_service: CoursesService = Depends(get_course_service)):
+async def fetch_levels(course_service: CourseService = Depends(get_course_service)):
     levels = await course_service.fetch_all_level()
     logger.info(levels)
     lev = []

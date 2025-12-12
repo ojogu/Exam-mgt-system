@@ -17,7 +17,7 @@ logger = setup_logger(__name__, "courses_service.log")
 #seed courses for 100l, lecturers register courses to teach, student register courses only based on their level and department 
 
 
-class CoursesService():
+class CourseService():
     def __init__(self, db: AsyncSession):
         self.db = db
     
@@ -36,8 +36,18 @@ class CoursesService():
         except Exception as e:
             logger.error(f"An unexpected error occurred while fetching all levels: {e}")
             raise ServerError()
+    
+    async def check_if_course_exist_for_a_dept(self):
+        pass 
+    
+    async def check_if_course_exist_for_a_level(self):
+        pass 
+    
+    async def create_course(self, course_data):
+        #ideally, only admin can create course (later update)
         
-
+        #check if the course exist and dept and level 
+        pass 
     #return dept
     #return courses for a dept
     #return level 

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator, ValidationError, EmailStr
 import uuid
 from datetime import datetime
@@ -18,8 +18,6 @@ class UserBaseSchema(BaseModel):
     department:str
     
     
-
-
 
 class CreateUser(UserBaseSchema):
     password: str
@@ -47,3 +45,6 @@ class UserResponse(UserBaseSchema):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+UserResponseList = List[UserResponse]

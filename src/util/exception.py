@@ -89,19 +89,6 @@ def register_error_handlers(app: FastAPI):
     )
     
     
-    app.add_exception_handler(
-        InvalidToken,
-        create_exception_handler(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            initial_detail={
-                "status": "error",
-                "message": "access or refresh token invalid",
-                "error_code": "Invalid_token",
-                "data": None,
-                
-            }
-        )
-    )
     
     app.add_exception_handler(
         AuthorizationError, 

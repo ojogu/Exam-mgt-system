@@ -17,7 +17,7 @@ class Department(BaseModel):
 
 class Course(BaseModel):
     name:Mapped[str] = mapped_column(String, nullable=False)
-    code:Mapped[str] = mapped_column(String, nullable=False)
+    code:Mapped[str] = mapped_column(String, nullable=False, unique=True)
     department_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("departments.id"), nullable=False)
     department:Mapped["Department"] = relationship("Department", backref="courses")
     level_id:Mapped[uuid.UUID] = mapped_column(ForeignKey("levels.id"), nullable=False)

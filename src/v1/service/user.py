@@ -77,7 +77,7 @@ class UserService():
         # except Exception as e:
         #     logger.error(f"Error creating user: {e}")
             await self.db.rollback()
-            raise ServerError(f"Failed to create user: {e}")
+            raise ServerError()
         
          
         
@@ -91,10 +91,13 @@ class UserService():
         # Try email first if provided
         if user_data.email:
             user = await self.check_if_user_exist_by_email(user_data.email)
+            # logger.debug(f"user found: {user.email}")
 
         # If not found yet, try school_id
         if not user and user_data.school_id:
+            logger.debug("user not found with email, using school id")
             user = await self.check_if_user_exist_by_school_id(user_data.school_id)
+            # logger.debug(f"user found with school id: {user.school_id}")
 
         # Handle not found
         if not user:
@@ -116,6 +119,23 @@ class UserService():
         }
         return jwt_payload
         
+    async def fetch_all_lecturers(self):
+        stmt = await self.db.execute(
+                select(User).options(selectinload(User.department)).where(
+                    User.role == Role_Enum.LECTURER
+                )
+        ) 
+        lec = stmt.scalars().all()
+        return lec
+    
+    async def fetch_all_students(self):
+        stmt = await self.db.execute(
+                select(User).options(selectinload(User.department)).where(
+                    User.role == Role_Enum.STUDENT
+                )
+        ) 
+        stud = stmt.scalars().all()
+        return stud
     
     async def check_if_user_exist_by_email(self, email:str):
         try:
