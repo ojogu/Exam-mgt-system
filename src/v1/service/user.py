@@ -73,9 +73,8 @@ class UserService():
             return new_user
         except AlreadyExistsError as e:
             logger.error(f"Failed to create user: {e}")
-            raise e
-        # except Exception as e:
-        #     logger.error(f"Error creating user: {e}")
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
             await self.db.rollback()
             raise ServerError()
         

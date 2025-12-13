@@ -3,6 +3,8 @@ from typing import Optional
 import uuid
 from pydantic import BaseModel, ConfigDict
 from src.v1.model.user import Role_Enum, Level_Enum
+from src.v1.schema.user import DepartmentResponse
+
 
 class BaseResponse(BaseModel):
     id: uuid.UUID
@@ -28,4 +30,13 @@ class CreateCourse(BaseModel):
     department_id: uuid.UUID
     level_id: uuid.UUID
     
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CourseResponse(BaseModel):
+    name:str
+    code:str
+    department: DeptResponse
+    level: LevelResponse
+     
     model_config = ConfigDict(from_attributes=True)
