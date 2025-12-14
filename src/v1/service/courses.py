@@ -39,20 +39,39 @@ class LevelService:
             raise ServerError()
 
     async def check_if_level_exist_by_id(self, level_id: uuid.UUID):
-        stmt = await self.db.execute(
-            select(Level).where(
-                Level.id == level_id
+        try:
+            stmt = await self.db.execute(
+                select(Level).where(
+                    Level.id == level_id
+                )
             )
-        ) 
-        level = stmt.scalar_one_or_none()
-        return level
+            level = stmt.scalar_one_or_none()
+            if level:
+                logger.info(f"Level {level.name} found with ID {level_id}.")
+            else:
+                logger.info(f"Level with ID {level_id} not found.")
+            return level
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking level existence by ID {level_id}: {e}")
+            raise ServerError()
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while checking level existence by ID {level_id}: {e}")
+            raise ServerError()
     
     async def fetch_all_courses_for_a_level(self):
-        stmt = await self.db.execute(
-            select(Course).options(selectinload(Course.level))
-        )
-        course = stmt.scalars().all()
-        return course
+        try:
+            stmt = await self.db.execute(
+                select(Course).options(selectinload(Course.level))
+            )
+            courses = stmt.scalars().all()
+            logger.info(f"Successfully fetched {len(courses)} courses with their levels.")
+            return courses
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while fetching all courses for levels: {e}")
+            raise ServerError()
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while fetching all courses for levels: {e}")
+            raise ServerError()
 
     async def check_if_course_exist_for_a_level_by_course_code(self, level_id: uuid.UUID, course_code: str):
         try:
@@ -229,13 +248,32 @@ class CourseService:
             self.db.add(new_course)
             await self.db.commit()
             await self.db.refresh(new_course)
-            logger.info(f"Successfully created course '{new_course.name}' with code '{new_course.code}' for department {course_data.department_id} and level {course_data.level_id}.")
+            logger.info(f"Successfully created course '{new_course.name}' with code '{new_course.code}' for department {new_course.department.name} and level {new_course.level.name}.")
             return new_course
         except SQLAlchemyError as e:
             logger.error(f"Database error while creating course with name '{course_data.name}' and code '{course_data.code}': {e}")
             raise ServerError()
         # except Exception as e:
         #     logger.error(f"An unexpected error occurred while creating course with name '{course_data.name}' and code '{course_data.code}': {e}")
+        #     raise ServerError()
+        
+    async def check_course_dept(self, course_id:uuid.UUID):
+        try:
+            stmt = await self.db.execute(
+                select(Course).options(selectinload(Course.department)).where(
+                        Course.id == course_id)
+            )
+            course = stmt.scalar_one_or_none()
+            if course:
+                logger.info(f"Course {course.name} ({course.code}) found with ID {course_id} in department {course.department.name}.")
+            else:
+                logger.info(f"Course with ID {course_id} not found.")
+            return course
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking course existence by ID {course_id}: {e}")
+            raise ServerError()
+        # except Exception as e:
+        #     logger.error(f"An unexpected error occurred while checking course existence by ID {course_id}: {e}")
         #     raise ServerError()
             
         

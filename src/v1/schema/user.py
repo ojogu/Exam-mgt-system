@@ -48,3 +48,8 @@ class UserResponse(UserBaseSchema):
 
 
 UserResponseList = List[UserResponse]
+
+
+class LinkLectToCourse(BaseModel):
+    lecturer_id: Optional[uuid.UUID] = Field(default=None)
+    course_id: uuid.UUID

@@ -141,7 +141,6 @@ class TokenService(HTTPBearer):
         return token_data
 
 
-        
     def verify_token_data(self, token_data:dict):
         raise NotImplementedError("Overide in the child classes ")
 

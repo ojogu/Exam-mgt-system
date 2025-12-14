@@ -34,9 +34,11 @@ class CreateCourse(BaseModel):
 
 
 class CourseResponse(BaseModel):
+    id: uuid.UUID
     name:str
     code:str
     department: DeptResponse
     level: LevelResponse
      
     model_config = ConfigDict(from_attributes=True)
+    

@@ -4,10 +4,19 @@ from src.v1.base.model import BaseModel
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String,  Enum as SqlEnum, Integer, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
+from sqlalchemy.dialects.postgresql import UUID
 from enum import StrEnum, IntEnum
 # from .courses import Department
+
+
+# Association table for many-to-many relationship between User and Course
+user_course_association = Table('user_course', BaseModel.metadata,
+    Column('user_id', UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True),
+    Column('course_id', UUID(as_uuid=True), ForeignKey('courses.id'), primary_key=True),
+    Column('registered_at', DateTime(timezone=True), default=datetime.utcnow),
+)
 
 
 class Role_Enum(StrEnum):
@@ -37,20 +46,22 @@ class User(BaseModel):
     
     department_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("departments.id"), nullable=True)
     department: Mapped[Optional["Department"]] = relationship("Department", uselist=False, backref=backref("user")) # type: ignore  # noqa: F821
-    @property
-    def level(self):
-        # Access the 'name' attribute from the related Level object
-        if self.level_rel:
-            return self.level_rel.name
-        return None
     
-    @level.setter
-    def level(self, value):
-        # You can ignore the assignment if this property is purely computed:
-        pass
+    courses: Mapped[List["Course"]] = relationship("Course", secondary=user_course_association, backref=backref("user")) #   # noqa: F821
+    
+    
+    # @property
+    # def level(self):
+    #     # Access the 'name' attribute from the related Level object
+    #     if self.level_rel:
+    #         return self.level_rel.name
+    #     return None
+    
+    # @level.setter
+    # def level(self, value):
+    #     # You can ignore the assignment if this property is purely computed:
+    #     pass
 
 class Level(BaseModel):
     name: Mapped[Level_Enum] = mapped_column(
-        SqlEnum(Level_Enum, name="level_enum"),  nullable=False) 
-
-    
+        SqlEnum(Level_Enum, name="level_enum"),  nullable=False)
