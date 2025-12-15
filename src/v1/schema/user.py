@@ -37,10 +37,16 @@ class CreateStudent(UserBaseSchema):
             raise ValueError("Level must be provided for students.")
         return self
 
+class Level(BaseModel):
+    id: uuid.UUID
+    name: Level_Enum
+    
+    model_config = ConfigDict(from_attributes=True)
+    
 class UserResponse(UserBaseSchema):
     department:DepartmentResponse
     id: uuid.UUID
-    level: Optional[Level_Enum] = None # Make level optional
+    level: Optional[Level] = None # Make level optional
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -50,6 +56,6 @@ class UserResponse(UserBaseSchema):
 UserResponseList = List[UserResponse]
 
 
-class LinkLectToCourse(BaseModel):
+class LectCourse(BaseModel):
     lecturer_id: Optional[uuid.UUID] = Field(default=None)
     course_id: uuid.UUID

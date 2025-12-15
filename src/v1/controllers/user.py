@@ -1,17 +1,16 @@
 from fastapi import APIRouter, Depends, status
-from src.v1.schema.user import CreateUser, UserResponse, UserResponseList, LinkLectToCourse
+from src.v1.schema.user import CreateUser, UserResponse, UserResponseList, LectCourse
 from src.v1.service.user import UserService
-from src.util.db import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model.user import Role_Enum
 from pydantic import EmailStr
 from src.util.response import success_response
 from src.v1.auth.service import AccessTokenBearer
 from src.util.log import setup_logger
+from .util import get_user_service
 logger = setup_logger(__name__, "user_route.log")
 
-def get_user_service(db: AsyncSession = Depends(get_session)):
-    return UserService(db=db)
+# def get_user_service(db: AsyncSession = Depends(get_session)):
+#     return UserService(db=db)
 
 user_router = APIRouter()
 
@@ -97,16 +96,15 @@ async def fetch_student_by_school_id(
         data=validated_data
     )
 
-access_token_bearer = AccessTokenBearer()
 
 @user_router.post("/lecturers/courses")
 async def link_lecturers_to_courses(
-    user_data: LinkLectToCourse,
+    user_data: LectCourse,
     user_service:UserService = Depends(get_user_service),
-    token_details:dict = Depends(access_token_bearer)):
+    token_details:dict = Depends(AccessTokenBearer())):
     
     lecturer_id = token_details["user"]["user_id"]
-    validated_data = LinkLectToCourse.model_validate({
+    validated_data = LectCourse.model_validate({
             "lecturer_id": lecturer_id,
             "course_id": user_data.course_id
         })

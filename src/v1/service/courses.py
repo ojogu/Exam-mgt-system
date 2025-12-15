@@ -2,6 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model import  Level_Enum, Role_Enum
 from src.v1.model import User, Level, Department, Course
 from sqlalchemy import select, or_
+from src.v1.schema.user import LectCourse
+
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
 from src.v1.schema.courses import CreateCourse
@@ -276,7 +278,48 @@ class CourseService:
         #     logger.error(f"An unexpected error occurred while checking course existence by ID {course_id}: {e}")
         #     raise ServerError()
             
+    async def fetch_all_student_taking_course(self, course_id: uuid.UUID):
+        pass
+    
+    async def fetch_all_lecturer_taking_course(self, course_id: uuid.UUID):
+        pass
+    
+    async def fetch_all_student_taking_course_with_lecturer(self, data: LectCourse):
+        try:
+            logger.info(f"Fetching course with ID {data.course_id}.")
+            #fetch the course, with the lecturer, query to get all student and course sharing the same level
+            stmt = await self.db.execute(
+                select(Course).options(
+                    # selectinload(Course.user),
+                    selectinload(Course.level),
+                    ).where(
+                        Course.id == data.course_id
+                    )
+            )
+            course = stmt.scalar_one_or_none()
+            if not course:
+                raise NotFoundError(f"{data.course_id} does not exist")
+            logger.info(f"Course '{course.name}' found with ID {data.course_id} at level {course.level.name}.")
+            logger.info(f"Fetching all students for level {course.level.name}.")
+            stmt = await self.db.execute(
+                select(User).options(
+                    selectinload(User.level)
+                ).where(
+                    User.role == Role_Enum.STUDENT,
+                    course.level_id == User.level_id
+                )
+            )
+            students = stmt.scalars().all()
+            logger.info(f"Successfully fetched {len(students)} students for course {course.name}.")
+            return students
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while fetching students for course {data.course_id}: {e}", exc_info=True)
+            raise ServerError()
+        # except Exception as e:
+        #     logger.error(f"An unexpected error occurred while fetching students for course {data.course_id}: {e}")
+        #     raise ServerError()
         
+         
 
     # return dept
     # return courses for a dept

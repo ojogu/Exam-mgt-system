@@ -38,7 +38,7 @@ class AuthService():
             # payload["jti"] = str(uuid.uuid4())
             # payload["refresh"] = refresh
             
-            to_expire = expiry if expiry is not None else timedelta(seconds=config.access_token_expiry)
+            to_expire = timedelta(seconds=expiry) if expiry is not None else timedelta(seconds=config.access_token_expiry)
             payload = Token(
                 user=user_data,
                 exp = datetime.now() + to_expire,
@@ -51,7 +51,7 @@ class AuthService():
                 key=config.jwt_secret_key,
                 algorithm=config.jwt_algo
             )
-            logger.info(f"access token created for user: {user_data.get('id')}")
+            logger.info(f"token created for user: {user_data.get('id')}")
             return token
         except Exception as e:
             logger.error(f"error creating access token for user {user_data.get('id')}: {e}", exc_info=True)

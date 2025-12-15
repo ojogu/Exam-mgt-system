@@ -5,7 +5,7 @@ from src.v1.model import User, Level, Department, Course
 from sqlalchemy import select, cast, String
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import SQLAlchemyError
-from src.v1.schema.user import CreateUser, CreateStudent, LinkLectToCourse
+from src.v1.schema.user import CreateUser, CreateStudent, LectCourse
 from src.v1.base.exception import (
     NotFoundError, 
     AlreadyExistsError,
@@ -74,6 +74,7 @@ class UserService():
             )
             
             self.db.add(new_user)
+            await self.db.refresh(new_user)
             await self.db.commit()
             logger.info(f"User {new_user.id} created successfully.")
             return new_user
@@ -152,7 +153,10 @@ class UserService():
     async def fetch_all_students(self):
         try:
             stmt = await self.db.execute(
-                    select(User).options(selectinload(User.department)).where(
+                    select(User).options(
+                    selectinload(User.department),
+                    selectinload(User.level)
+                    ).where(
                         User.role == Role_Enum.STUDENT
                     )
             )
@@ -225,7 +229,7 @@ class UserService():
             logger.error(f"Error checking if user exists by school ID {school_id}: {e}")
             raise ServerError()
     
-    async def link_lecturer_to_course(self, user_data:LinkLectToCourse ):
+    async def link_lecturer_to_course(self, user_data:LectCourse ):
         try:
             logger.info(f"Attempting to link lecturer {user_data.lecturer_id} to course {user_data.course_id}.")
             #lecturers and course must have the same department

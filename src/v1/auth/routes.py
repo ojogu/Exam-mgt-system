@@ -6,11 +6,13 @@ from src.util.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model.user import Role_Enum
 from src.util.response import success_response
+from src.v1.controllers.util import get_user_service
 from .schema import Login
 from .service import auth_service, RefreshTokenBearer, AccessTokenBearer
+from src.util.config import config
 
-def get_user_service(db: AsyncSession = Depends(get_session)):
-    return UserService(db=db)
+# def get_user_service(db: AsyncSession = Depends(get_session)):
+#     return UserService(db=db)
 
 auth_router = APIRouter(prefix="/auth")
 
@@ -47,12 +49,32 @@ user_service:UserService = Depends(get_user_service)
 async def login(user_data: Login,
 user_service:UserService = Depends(get_user_service)                   
 ):
+    # tokens = []
     user = await user_service.authenticate_user(user_data)
-    jwt_token = auth_service.create_access_token(user)
+    access_token = auth_service.create_access_token(user)
+    
+    refresh_token = auth_service.create_access_token(
+        user_data = user,
+        expiry = config.refresh_token_expiry,
+        refresh = True
+        
+    )
+    data = ( 
+        {"access_token": access_token,
+         "refresh_token": refresh_token,
+         "token_type": "Bearer",
+         "expires_in": config.access_token_expiry,
+         "user_data": {
+             "user_id": user["user_id"],
+             "role": user["role"]
+         }
+        }
+    )
+    
     return success_response(
-        message="Access Token Successfully Generated",
+        message="Tokens Successfully Generated",
         status_code=status.HTTP_200_OK,
-        data=jwt_token
+        data=data
     )
      
 
