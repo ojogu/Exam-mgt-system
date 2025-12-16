@@ -128,11 +128,11 @@ async def fetch_all_lecturers_taking_course(
         {"user_id": user_id, "course_id": course_id}
     )
     logger.debug(f"request body: {validated_data.course_id}, {validated_data.user_id}")
-    students = await course_service.fetch_all_student_taking_course(validated_data)
+    lecturers = await course_service.fetch_all_lecturers_taking_course(validated_data)
     user_list = []
-    for student in students:
+    for lecturer in lecturers:
         # logger.info(f"loop: {level}")
-        user_value = UserResponse.model_validate(student).model_dump(exclude="password")
+        user_value = UserResponse.model_validate(lecturer).model_dump(exclude="password")
         # logger.info(level_value)
         user_list.append(user_value)
     return success_response(status_code=status.HTTP_200_OK, data=user_list)

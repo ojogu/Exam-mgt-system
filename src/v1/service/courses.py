@@ -365,13 +365,11 @@ class CourseService:
     async def fetch_all_lecturers_taking_course(self, data: UserCourse):
         try:
             logger.info(f"Fetching course with ID {data.course_id}.")
-            # fetch the course, with the lecturer, query to get all student and course sharing the same level
-            # lecturer and course should share the same level(join)
             stmt = await self.db.execute(
                 select(Course)
                 .options(
                     # selectinload(Course.user),
-                    # selectinload(Course.level),
+                    selectinload(Course.level),
                     selectinload(Course.department),
                 )
                 .where(Course.id == data.course_id)
@@ -384,9 +382,13 @@ class CourseService:
             )
             logger.info(f"Fetching all lecturer for level {course.level.name}.")
             stmt = await self.db.execute(
-                select(User)
-                .options(selectinload(User.level), selectinload(User.department))
-                .where(User.role == Role_Enum.STUDENT, course.level_id == User.level_id)
+                select(User).join(
+                    User.courses
+                )
+                .options(
+                selectinload(User.level),
+                selectinload(User.department))
+                .where(User.role == Role_Enum.LECTURER)
             )
             students = stmt.scalars().all()
             logger.info(
