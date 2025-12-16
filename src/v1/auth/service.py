@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import uuid
 from passlib.context import CryptContext
-from fastapi import Request
+from fastapi import Depends, Request
 import jwt
 from src.util.config import config
 from src.v1.base.exception import TokenExpired
@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.v1.base.exception import InvalidToken
 from src.util.log import setup_logger
 from .schema import Token
+from src.util.redis_client import key_exist, set_cache
 logger = setup_logger(__name__, "auth_service.log")
 
 ctx = CryptContext(
@@ -129,23 +130,27 @@ class TokenService(HTTPBearer):
         # Step 3: Decode token
         try:
             token_data = auth_service.decode_token(token)
-        except Exception:
+        except Exception as e:
+            logger.error(f"an error occurred during decoding token: {e}")
             raise InvalidToken("Invalid or expired token")
 
         if not token_data:
             raise InvalidToken("No data found in token")
 
+        #check if token in block list 
+        if await key_exist(key=token_data["jti"]):
+            raise InvalidToken("Token has been revoked, get new token") 
         # Allow child to validate token type (access or refresh)
-        self.verify_token_data(token_data)
+        self.verify_token_type(token_data)
         
         return token_data
 
 
-    def verify_token_data(self, token_data:dict):
+    def verify_token_type(self, token_data:dict):
         raise NotImplementedError("Overide in the child classes ")
 
 class AccessTokenBearer(TokenService):
-    def verify_token_data(self, token_data:dict):
+    def verify_token_type(self, token_data:dict):
         """
         Verifies that the token data is a valid access token.
 
@@ -159,7 +164,7 @@ class AccessTokenBearer(TokenService):
             raise InvalidToken("Please provide a valid access token, not a refresh token")
         
 class RefreshTokenBearer(TokenService):
-    def verify_token_data(self, token_data:dict):
+    def verify_token_type(self, token_data:dict):
         """
         Verifies that the token data is a valid refresh token.
 
@@ -174,4 +179,5 @@ class RefreshTokenBearer(TokenService):
 
 
 
+    
 

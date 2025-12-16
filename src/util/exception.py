@@ -164,7 +164,7 @@ def register_error_handlers(app: FastAPI):
     app.add_exception_handler(
         InvalidEmailPassword,
         create_exception_handler(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             initial_detail={
                 "status": "error",
                 "message": "Invalid email or password",
@@ -421,3 +421,7 @@ register_error_handlers(app)
 async def test_error():
     raise NotFoundError("This is a test error")
 """
+
+
+
+#improvements; being able to optionally pass status code, resolution and other param 

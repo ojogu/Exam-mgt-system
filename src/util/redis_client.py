@@ -57,7 +57,7 @@ async def get_or_fetch_cache(key: str, fetch_callback: callable, ttl: int = CACH
 
     return fresh
 
-async def set_cache(key: str, data, ttl: int = CACHE_TTL) -> bool:
+async def set_cache(key: str, data:dict, ttl: int = CACHE_TTL) -> bool:
     """
     Store `data` (JSON-serializable) under `key` with expiration `ttl` seconds.
     Returns True on success, False on failure.
@@ -71,44 +71,28 @@ async def set_cache(key: str, data, ttl: int = CACHE_TTL) -> bool:
     except Exception as e:
         logger.error(f"Failed to write cache for key {key}: {e}")
         return False
-    
-# if __name__ == "__main__":
-#     import asyncio
-#     import json
-#     from redis.asyncio import Redis
 
-#     async def main():
-#         r = Redis(host="localhost", port=6379, decode_responses=True)
-        
-#         # write key
-#         key = "test_user"
-#         data = {"auth_cookie": "abc123", "expires_at": "tomorrow"}
-#         await r.set(key, json.dumps(data), ex=60)
-#         print("Key set successfully")
-        
-#         # read key immediately
-#         val = await r.get(key)
-#         print("Read value:", val)
-        
-#         # check TTL
-#         print("TTL:", await r.ttl(key))
-        
-#         # list all keys
-#         print("Keys:", await r.keys("*"))
+async def get_cache(key: str) -> Optional[dict]:
+    """
+    Retrieve cached data for `key`.
+    Returns the deserialized JSON data if found, None otherwise.
+    """
+    try:
+        redis_conn = await get_redis()
+        cached = await redis_conn.get(key)
+        if cached:
+            logger.debug(f"Cache hit for key={key}, value={cached}")
+            return json.loads(cached)
+        else:
+            logger.debug(f"Cache miss for key={key}")
+            return None
+    except Exception as e:
+        logger.error(f"Failed to get cache for key {key}: {e}")
+        return None
 
-#     asyncio.run(main())
-#     # import asyncio
-
-#     # async def main():
-#     #     await setup_redis()
-#     #     r = await get_redis()
-
-#     #     print("Connected to:", r.connection_pool.connection_kwargs)
-
-#     #     await r.set("debug_test", "hello")
-#     #     print("TTL debug_test:", await r.ttl("debug_test"))
-#     #     print("Exists:", await r.exists("debug_test"))
-#     #     print(await r.keys("*"))
-
-
-#     # asyncio.run(main())
+async def key_exist(key:str):
+    redis = await get_redis()
+    exist = await redis.exists(key)
+    if exist:
+        return True
+    return False

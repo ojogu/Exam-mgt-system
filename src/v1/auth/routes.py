@@ -2,17 +2,14 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, status
 from src.v1.schema.user import CreateUser, UserResponse, CreateStudent
 from src.v1.service.user import UserService
-from src.util.db import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
 from src.v1.model.user import Role_Enum
 from src.util.response import success_response
-from src.v1.controllers.util import get_user_service
+from src.v1.controllers.util import get_user_service, get_current_user
 from .schema import Login
 from .service import auth_service, RefreshTokenBearer, AccessTokenBearer
 from src.util.config import config
-
-# def get_user_service(db: AsyncSession = Depends(get_session)):
-#     return UserService(db=db)
+from src.util.redis_client import key_exist, set_cache
+from src.v1.auth.authorization import RoleCheck
 
 auth_router = APIRouter(prefix="/auth")
 
@@ -80,6 +77,7 @@ user_service:UserService = Depends(get_user_service)
 
 @auth_router.get("/refresh-token")
 async def get_new_access_token(token_details:dict = Depends(RefreshTokenBearer())):
+    #make sure it's not expired
     expiry_timestamp = token_details["exp"] 
     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
         new_access_token = auth_service.create_access_token(
@@ -92,3 +90,27 @@ async def get_new_access_token(token_details:dict = Depends(RefreshTokenBearer()
     )
         
 
+@auth_router.get("/me")
+async def current_user(user = Depends(get_current_user),
+            role = Depends(RoleCheck([Role_Enum.LECTURER]))
+            ):
+    validated_data = UserResponse.model_validate(user).model_dump()
+    return success_response(
+        message="User Fetched Successfully",
+        status_code=status.HTTP_200_OK,
+        data=validated_data
+    )
+
+@auth_router.get("/logout")
+async def revoke_token(token_details:dict = Depends(AccessTokenBearer())):
+    jti = token_details["jti"]
+    await set_cache(
+        key= str(jti),
+        data=""
+    )
+    return success_response(
+        message="Logged Out Successfully",
+        status_code=status.HTTP_200_OK,
+        data=None
+    )
+     
